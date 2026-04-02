@@ -316,7 +316,9 @@ function PensionOptimizationCard({ inputs }: { inputs: SimulatorInputs }) {
             </p>
           </div>
           <a
-            href="#"
+            href="https://www.miraeasset.com/retirement/irp/index.do"
+            target="_blank"
+            rel="noopener noreferrer"
             className="shrink-0 px-3.5 py-2.5 bg-orange-500 hover:bg-orange-400 active:scale-95 transition-all text-white text-xs font-bold rounded-lg shadow-md shadow-orange-900/40 whitespace-nowrap"
           >
             IRP 가입하기
@@ -341,7 +343,9 @@ function PensionOptimizationCard({ inputs }: { inputs: SimulatorInputs }) {
             </p>
           </div>
           <a
-            href="#"
+            href="https://www.miraeasset.com/retirement/irp/index.do"
+            target="_blank"
+            rel="noopener noreferrer"
             className="shrink-0 px-3.5 py-2.5 bg-amber-500 hover:bg-amber-400 active:scale-95 transition-all text-white text-xs font-bold rounded-lg shadow-md shadow-amber-900/40 whitespace-nowrap"
           >
             IRP 가입하기
