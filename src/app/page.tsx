@@ -25,6 +25,7 @@ const DEFAULT_INPUTS: SimulatorInputs = {
   pensionStartAge: 65,
   targetSalary: 4500,
   job: "개발",
+  inflationRate: 2,
 };
 
 const DEFAULT_SPOUSE: SpouseInputs = {

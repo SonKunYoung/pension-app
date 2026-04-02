@@ -27,6 +27,8 @@ export default function ResultSection({ results, inputs }: Props) {
   const isDeferred = pensionStartAge > 65;
   const deferYears = pensionStartAge - 65;
   const bonusPct = (deferYears * 7.2).toFixed(0);
+  const yearsToRetirement = Math.max(0, (isDeferred ? pensionStartAge : 65) - inputs.currentAge);
+  const inflationFactor = Math.pow(1 + inputs.inflationRate / 100, yearsToRetirement);
 
   return (
     <div className="space-y-4">
@@ -45,6 +47,8 @@ export default function ResultSection({ results, inputs }: Props) {
           total30={current.totalPension30}
           total30Deferred={current.totalPensionDeferred30}
           pensionStartAge={pensionStartAge}
+          inflationFactor={inflationFactor}
+          inflationRate={inputs.inflationRate}
         />
         <ScenarioCard
           title="이직 후"
@@ -57,8 +61,18 @@ export default function ResultSection({ results, inputs }: Props) {
           total30={afterChange.totalPension30}
           total30Deferred={afterChange.totalPensionDeferred30}
           pensionStartAge={pensionStartAge}
+          inflationFactor={inflationFactor}
+          inflationRate={inputs.inflationRate}
         />
       </div>
+
+      {/* 소득대체율 시나리오 */}
+      <PensionScenariosSection
+        currentMonthly={current.monthlyPension}
+        afterMonthly={afterChange.monthlyPension}
+        currentAge={inputs.currentAge}
+        inflationRate={inputs.inflationRate}
+      />
 
       {/* 이직 차이 요약 */}
       <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-5">
@@ -108,6 +122,8 @@ function ScenarioCard({
   total30,
   total30Deferred,
   pensionStartAge,
+  inflationFactor,
+  inflationRate,
 }: {
   title: string;
   color: "blue" | "emerald";
@@ -119,11 +135,15 @@ function ScenarioCard({
   total30: number;
   total30Deferred: number;
   pensionStartAge: number;
+  inflationFactor: number;
+  inflationRate: number;
 }) {
   const isDeferred = pensionStartAge > 65;
   const borderColor = color === "blue" ? "border-blue-500/40" : "border-emerald-500/40";
   const badgeColor = color === "blue" ? "bg-blue-500/15 text-blue-300" : "bg-emerald-500/15 text-emerald-300";
   const monthlyColor = color === "blue" ? "text-blue-400" : "text-emerald-400";
+  const displayMonthly = isDeferred ? monthlyDeferred : monthly65;
+  const realMonthly = Math.round((displayMonthly / inflationFactor) * 10) / 10;
 
   return (
     <div className={`bg-slate-800/60 border ${borderColor} rounded-xl p-5`}>
@@ -145,6 +165,12 @@ function ScenarioCard({
             <p className="text-xs text-amber-400 mb-1">{pensionStartAge}세 연기 수령</p>
             <p className="text-xl font-bold text-amber-300">{fmt(monthlyDeferred)}만원<span className="text-sm font-normal text-amber-500/70">/월</span></p>
             <p className="text-xs text-amber-500/70">30년 누적 {fmt(total30Deferred)}만원</p>
+          </div>
+        )}
+        {inflationRate > 0 && (
+          <div className="bg-slate-700/40 border border-slate-600/40 rounded-lg px-3 py-2">
+            <p className="text-xs text-slate-500 mb-0.5">실질 구매력 (오늘날 가치, 물가 {inflationRate}%)</p>
+            <p className="text-sm font-semibold text-amber-300">≈ {fmt(realMonthly)}만원/월</p>
           </div>
         )}
       </div>
@@ -322,6 +348,74 @@ function PensionOptimizationCard({ inputs }: { inputs: SimulatorInputs }) {
           </a>
         </div>
       </div>
+    </div>
+  );
+}
+
+function PensionScenariosSection({
+  currentMonthly,
+  afterMonthly,
+  currentAge,
+  inflationRate,
+}: {
+  currentMonthly: number;
+  afterMonthly: number;
+  currentAge: number;
+  inflationRate: number;
+}) {
+  const yearsToRetirement = Math.max(0, 65 - currentAge);
+  const inflationFactor = Math.pow(1 + inflationRate / 100, yearsToRetirement);
+
+  const scenarios = [
+    { label: "40%", sublabel: "현행 유지", rate: 1.0, color: "text-blue-400", badge: "bg-blue-500/15 text-blue-300 border-blue-500/30" },
+    { label: "35%", sublabel: "개혁안 A", rate: 35 / 40, color: "text-amber-400", badge: "bg-amber-500/15 text-amber-300 border-amber-500/30" },
+    { label: "30%", sublabel: "개혁안 B", rate: 30 / 40, color: "text-rose-400", badge: "bg-rose-500/15 text-rose-300 border-rose-500/30" },
+  ];
+
+  return (
+    <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-5">
+      <h3 className="text-base font-semibold text-slate-300 mb-1">📋 소득대체율 시나리오 비교</h3>
+      <p className="text-xs text-slate-500 mb-4">
+        국민연금 소득대체율 개편 시 예상 월 수령액 (65세 즉시 수령 기준)
+      </p>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-slate-700">
+              <th className="text-left text-xs text-slate-500 font-medium pb-2 pr-3">시나리오</th>
+              <th className="text-right text-xs text-slate-500 font-medium pb-2 px-2">현재 회사 유지</th>
+              <th className="text-right text-xs text-slate-500 font-medium pb-2 px-2">이직 후</th>
+              {inflationRate > 0 && (
+                <th className="text-right text-xs text-amber-500/70 font-medium pb-2 pl-2">이직 후 실질가치</th>
+              )}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-700/50">
+            {scenarios.map((s) => {
+              const cur = Math.round(currentMonthly * s.rate * 10) / 10;
+              const after = Math.round(afterMonthly * s.rate * 10) / 10;
+              const afterReal = Math.round((after / inflationFactor) * 10) / 10;
+              return (
+                <tr key={s.label}>
+                  <td className="py-2.5 pr-3">
+                    <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2 py-0.5 rounded-full border ${s.badge}`}>
+                      {s.label} <span className="font-normal opacity-70">{s.sublabel}</span>
+                    </span>
+                  </td>
+                  <td className={`py-2.5 px-2 text-right font-semibold ${s.color}`}>{fmt(cur)}만원</td>
+                  <td className={`py-2.5 px-2 text-right font-bold ${s.color}`}>{fmt(after)}만원</td>
+                  {inflationRate > 0 && (
+                    <td className="py-2.5 pl-2 text-right text-amber-300/80 text-xs font-medium">≈ {fmt(afterReal)}만원</td>
+                  )}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+      <p className="mt-3 text-xs text-slate-600">
+        * 소득대체율 40% = 40년 가입 시 평균 소득의 40% 수령 (1988년 70%→2028년 40% 단계 인하 완료 예정)
+      </p>
     </div>
   );
 }

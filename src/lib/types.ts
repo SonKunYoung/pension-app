@@ -9,6 +9,7 @@ export interface SimulatorInputs {
   pensionStartAge: number;    // 연금 수령 시작 나이 (65~70)
   targetSalary: number;       // 협상 목표 연봉 (만원)
   job: JobRole;               // 직무
+  inflationRate: number;      // 물가 상승률 (%, 0~5)
 }
 
 export interface AssetInputs {

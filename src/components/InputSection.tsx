@@ -188,6 +188,59 @@ export default function InputSection({ inputs, onChange }: Props) {
           />
         </div>
       </section>
+
+      {/* 시나리오 설정 */}
+      <section>
+        <h2 className="text-sm font-semibold text-blue-400 uppercase tracking-wider mb-3">
+          시나리오 설정
+        </h2>
+        <div className="bg-slate-800/60 border border-slate-700/50 rounded-xl p-4 space-y-4">
+          <p className="text-xs text-slate-500">
+            물가 상승률은 연금 수령 시점의 실질 구매력 계산에 사용됩니다
+          </p>
+          <InflationSlider
+            value={inputs.inflationRate}
+            onChange={(v) => onChange("inflationRate", v)}
+          />
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function InflationSlider({ value, onChange }: { value: number; onChange: (v: number) => void }) {
+  const presets = [0, 1, 2, 3, 4, 5];
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <label className="text-sm text-slate-400">물가 상승률 (연평균)</label>
+        <span className="text-sm font-bold text-amber-300">{value.toFixed(1)}%</span>
+      </div>
+      <input
+        type="range"
+        min={0}
+        max={5}
+        step={0.5}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="w-full h-1.5 cursor-pointer accent-amber-400"
+      />
+      <div className="flex justify-between mt-2 gap-1">
+        {presets.map((p) => (
+          <button
+            key={p}
+            type="button"
+            onClick={() => onChange(p)}
+            className={`flex-1 py-1 rounded text-xs font-medium transition-all ${
+              value === p
+                ? "bg-amber-500/30 border border-amber-500/50 text-amber-300"
+                : "bg-slate-700/50 border border-slate-600/50 text-slate-500 hover:text-slate-400"
+            }`}
+          >
+            {p}%
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
