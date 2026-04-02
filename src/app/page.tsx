@@ -12,6 +12,7 @@ import CoupleResultSection from "@/components/CoupleResultSection";
 import AssetInputSection from "@/components/AssetInputSection";
 import RetirementAssetSection from "@/components/RetirementAssetSection";
 import { calculatePension } from "@/lib/calculator";
+import { gtagEvent } from "@/lib/gtag";
 import { calcPeerRank } from "@/lib/peer-data";
 import type { SimulatorInputs, SimulatorResults, SpouseInputs, AssetInputs } from "@/lib/types";
 
@@ -52,7 +53,13 @@ export default function Home() {
   const handleCalculate = useCallback(() => {
     const res = calculatePension(inputs);
     setResults(res);
-  }, [inputs]);
+    gtagEvent("calculate_pension", {
+      current_age: inputs.currentAge,
+      subscription_years: inputs.subscriptionYears,
+      job: inputs.job,
+      couple_mode: coupleMode,
+    });
+  }, [inputs, coupleMode]);
 
   const handleChange = useCallback(
     (field: keyof SimulatorInputs, value: number | string) => {
